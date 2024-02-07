@@ -32,7 +32,35 @@ class _ExpensesState extends State<Expenses> {
   void _handleOpenAddExpenseModal() {
     showModalBottomSheet(
       context: context,
-      builder: (context) => const NewExpense(),
+      isScrollControlled: true,
+      builder: (context) => NewExpense(onAddNewExpense: addNewExpense),
+    );
+  }
+
+  void addNewExpense(ExpenseModel expense) {
+    setState(() {
+      _initialExpense.add(expense);
+    });
+  }
+
+  void _removeExpense(ExpenseModel expense) {
+    final expenseIndex = _initialExpense.indexOf(expense);
+    setState(() {
+      _initialExpense.remove(expense);
+    });
+    ScaffoldMessenger.of(context).clearSnackBars();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text("Expense removed"),
+        duration: const Duration(seconds: 2),
+        action: SnackBarAction(
+            label: 'Undo',
+            onPressed: () {
+              setState(() {
+                _initialExpense.insert(expenseIndex, expense);
+              });
+            }),
+      ),
     );
   }
 
@@ -55,10 +83,16 @@ class _ExpensesState extends State<Expenses> {
       ),
       body: Column(
         children: [
-          const Text("Chart here"),
+          const SizedBox(height: 15),
           Expanded(
-            child: ExpensesList(expensesList: _initialExpense),
-          ),
+              child: _initialExpense.isNotEmpty
+                  ? ExpensesList(
+                      expensesList: _initialExpense,
+                      onRemoveExpense: _removeExpense,
+                    )
+                  : const Center(
+                      child: Text("No Expense found. Try to add new..."),
+                    )),
         ],
       ),
     );
